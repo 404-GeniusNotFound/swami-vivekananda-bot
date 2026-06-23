@@ -6,9 +6,37 @@ from langchain_groq import ChatGroq
 from dotenv import load_dotenv
 from operator import itemgetter
 import os
+import re
+import random
 
 # Load environment variables
 load_dotenv()
+
+GREETINGS = [
+    "Namaste, my child! I am here to speak of the divinity within you. What spiritual truths shall we discuss today?",
+    "Namaste! Arise, awake, and speak of the eternal truths. What is on your mind, my child?",
+    "Namaste, my child. I am here to discuss the nature of the soul, strength, and character. Ask, and let us seek the truth together.",
+    "Namaste! Let us speak of Vedanta, yoga, and the Atman. What question do you have for me today, my child?"
+]
+
+def is_simple_greeting(text: str) -> bool:
+    clean = re.sub(r'[^\w\s]', '', text).strip().lower()
+    common_greetings = {
+        "hi", "hello", "hey", "namaste", "pranam", "pranaam", "greetings",
+        "hi swamiji", "hello swamiji", "namaste swamiji", "pranam swamiji", "pranaam swamiji",
+        "good morning", "good afternoon", "good evening", "hi bot", "hello bot"
+    }
+    return clean in common_greetings
+
+class ConversationalRagChain:
+    def __init__(self, rag_chain):
+        self.rag_chain = rag_chain
+        
+    def invoke(self, inputs, config=None):
+        question = str(inputs.get("question", ""))
+        if is_simple_greeting(question):
+            return random.choice(GREETINGS)
+        return self.rag_chain.invoke(inputs, config)
 
 def get_retriever():
     api_key = os.getenv("PINECONE_API_KEY")
@@ -32,8 +60,8 @@ def get_retriever():
         pinecone_api_key=api_key
     )
     
-    # Create retriever
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+    # Create retriever with k=3 to optimize input token consumption
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
     return retriever
 
 def format_docs(docs):
@@ -55,9 +83,10 @@ def get_rag_chain():
         model="llama-3.3-70b-versatile",
         temperature=0.7,
         max_retries=2,
+        max_tokens=300,  # Enforce output length limit
     )
 
-    # Simplified Persona Prompt
+    # Simplified Persona Prompt with Conciseness instructions
     template = '''You are Swami Vivekananda. Answer the question based on the following context.
     
     Context:
@@ -79,6 +108,7 @@ def get_rag_chain():
     4. **Addressing the User**: Always address the user as **"My child"**. 
     5. **Handling Ignorance**: IF the answer is not in the Context, state: "I find no record of this in my sayings."
     6. **FORMATTING**: Highlight key spiritual concepts (e.g., **Karma**, **Atman**, **Maya**) using **bold** markdown.
+    7. **CONCISENESS & CONVERSATIONAL STYLE**: Keep your response brief, direct, and conversational (typically **3 to 5 sentences** / 1-2 short paragraphs). Do not lecture or write long essays. Deliver one strong point or quote and invite the user to delve deeper if they wish.
     
     Question: {question}
     
@@ -97,4 +127,5 @@ def get_rag_chain():
         | StrOutputParser()
     )
     
-    return rag_chain
+    return ConversationalRagChain(rag_chain)
+
