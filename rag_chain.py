@@ -1,5 +1,4 @@
-from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_pinecone import PineconeEmbeddings, PineconeVectorStore
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
@@ -7,25 +6,31 @@ from langchain_groq import ChatGroq
 from dotenv import load_dotenv
 from operator import itemgetter
 import os
-import ingest  # Import ingest module
 
 # Load environment variables
 load_dotenv()
 
-# Paths
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "chroma_db")
-
 def get_retriever():
-    print(f"DEBUG: Checking DB_PATH: {DB_PATH}")
-    if not os.path.exists(DB_PATH):
-        print("DB not found. Running ingestion...")
-        ingest.ingest() # Build DB if missing
+    api_key = os.getenv("PINECONE_API_KEY")
+    index_name = os.getenv("PINECONE_INDEX_NAME")
     
-    print("DEBUG: Loading Embeddings...")
-    embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    print("DEBUG: Loading VectorStore...")
-    vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=embedding_function)
+    if not api_key:
+        raise ValueError("PINECONE_API_KEY not found in environment variables.")
+    if not index_name:
+        raise ValueError("PINECONE_INDEX_NAME not found in environment variables.")
+        
+    print("DEBUG: Loading Pinecone Embeddings...")
+    embeddings = PineconeEmbeddings(
+        model="multilingual-e5-large", 
+        pinecone_api_key=api_key
+    )
+    
+    print("DEBUG: Loading Pinecone VectorStore...")
+    vectorstore = PineconeVectorStore(
+        index_name=index_name, 
+        embedding=embeddings,
+        pinecone_api_key=api_key
+    )
     
     # Create retriever
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
