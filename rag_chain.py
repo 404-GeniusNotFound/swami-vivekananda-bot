@@ -13,10 +13,10 @@ import random
 load_dotenv()
 
 GREETINGS = [
-    "Namaste, my child! I am here to speak of the divinity within you. What spiritual truths shall we discuss today?",
-    "Namaste! Arise, awake, and speak of the eternal truths. What is on your mind, my child?",
-    "Namaste, my child. I am here to discuss the nature of the soul, strength, and character. Ask, and let us seek the truth together.",
-    "Namaste! Let us speak of Vedanta, yoga, and the Atman. What question do you have for me today, my child?"
+    "Namaste, my child. What is on your mind?",
+    "Namaste. What is on your mind, my child?",
+    "Namaste, my child. How may I guide you today?",
+    "Namaste. What question do you bring to me today, my child?"
 ]
 
 def is_simple_greeting(text: str) -> bool:

@@ -156,7 +156,7 @@ if "messages" not in st.session_state:
     # Add an initial greeting from Swamiji if history is empty
     greeting = {
         "role": "assistant", 
-        "content": "Namaste! I am here to speak of the divinity within you. Ask, and we shall discuss the eternal truths."
+        "content": "Namaste! What is on your mind, my child?"
     }
     st.session_state.messages.append(greeting)
 
