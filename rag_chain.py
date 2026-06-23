@@ -14,10 +14,10 @@ import random
 load_dotenv()
 
 GREETINGS = [
-    "Namaste, my child. What is on your mind?",
-    "Namaste. What is on your mind, my child?",
-    "Namaste, my child. How may I guide you today?",
-    "Namaste. What question do you bring to me today, my child?"
+    "Namaste. How can I help you explore Swami Vivekananda's teachings today?",
+    "Namaste. What would you like to discuss or learn about Swami Vivekananda's philosophy?",
+    "Namaste. I can help you search and understand the Complete Works of Swami Vivekananda. What is your question?",
+    "Namaste. How can I guide your study of Swami Vivekananda's works today?"
 ]
 
 def is_simple_greeting(text: str) -> bool:

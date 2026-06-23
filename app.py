@@ -125,9 +125,9 @@ with st.sidebar:
     ---
     **"Arise, awake, and stop not till the goal is reached."**
     
-    This bot is trained on the **Complete Works of Swami Vivekananda**. 
+    This AI guide is trained on the **Complete Works of Swami Vivekananda**. 
     
-    It adopts his persona to guide you on:
+    It helps you explore his teachings on:
     - **Vedanta & Philosophy**
     - **Yoga & Meditation**
     - **Strength & Character**
@@ -156,7 +156,7 @@ if "messages" not in st.session_state:
     # Add an initial greeting from Swamiji if history is empty
     greeting = {
         "role": "assistant", 
-        "content": "Namaste! What is on your mind, my child?"
+        "content": "Namaste! How can I help you explore the teachings of Swami Vivekananda today?"
     }
     st.session_state.messages.append(greeting)
 
@@ -166,7 +166,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # User input
-if prompt := st.chat_input("Ask a question to Swamiji...", max_chars=500):
+if prompt := st.chat_input("Ask a question about Swamiji's teachings...", max_chars=500):
     # Convert input to string just in case
     prompt = str(prompt)
     
@@ -176,7 +176,7 @@ if prompt := st.chat_input("Ask a question to Swamiji...", max_chars=500):
 
     # Generate response
     with st.chat_message("assistant", avatar="assets/swamiji_avatar.png"):
-        with st.spinner("Meditating on the question..."):
+        with st.spinner("Searching and studying the teachings..."):
             try:
                 # Direct call without caching to avoid connection pool issues
                 chain = get_rag_chain()
