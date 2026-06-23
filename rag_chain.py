@@ -3,6 +3,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
+from langchain_core.messages import SystemMessage, HumanMessage
 from dotenv import load_dotenv
 from operator import itemgetter
 import os
@@ -28,15 +29,58 @@ def is_simple_greeting(text: str) -> bool:
     }
     return clean in common_greetings
 
+def format_chat_history(messages):
+    formatted = []
+    for msg in messages:
+        role = "Human" if msg["role"] == "user" else "Assistant"
+        formatted.append(f"{role}: {msg['content']}")
+    return "\n".join(formatted)
+
+def rephrase_question(question: str, chat_history: str, llm) -> str:
+    system_prompt = (
+        "You are a helpful assistant that rephrases follow-up questions to be standalone questions "
+        "using the conversation history. Do NOT answer the question. Only return the rephrased "
+        "question. If the question is already a standalone question or if it cannot be contextualized, "
+        "return it exactly as it is."
+    )
+    user_prompt = (
+        f"Conversation History:\n{chat_history}\n\n"
+        f"Follow-up Question: {question}\n\n"
+        f"Standalone Question:"
+    )
+    try:
+        response = llm.invoke([
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_prompt)
+        ])
+        return response.content.strip()
+    except Exception as e:
+        print(f"Error rephrasing question: {e}")
+        return question
+
 class ConversationalRagChain:
-    def __init__(self, rag_chain):
+    def __init__(self, rag_chain, llm):
         self.rag_chain = rag_chain
+        self.llm = llm
         
     def invoke(self, inputs, config=None):
         question = str(inputs.get("question", ""))
+        chat_history_raw = inputs.get("chat_history", [])
+        
+        # 1. Handle simple greetings
         if is_simple_greeting(question):
             return random.choice(GREETINGS)
-        return self.rag_chain.invoke(inputs, config)
+            
+        # 2. Rephrase follow-up questions if history exists
+        standalone_question = question
+        if chat_history_raw:
+            formatted_history = format_chat_history(chat_history_raw)
+            standalone_question = rephrase_question(question, formatted_history, self.llm)
+            print(f"DEBUG: Rephrased standalone question: '{standalone_question}' (Original: '{question}')")
+            
+        # 3. Invoke RAG chain with standalone question
+        return self.rag_chain.invoke({"question": standalone_question}, config)
+
 
 def get_retriever():
     api_key = os.getenv("PINECONE_API_KEY")
@@ -127,5 +171,5 @@ def get_rag_chain():
         | StrOutputParser()
     )
     
-    return ConversationalRagChain(rag_chain)
+    return ConversationalRagChain(rag_chain, llm)
 

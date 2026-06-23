@@ -180,7 +180,10 @@ if prompt := st.chat_input("Ask a question to Swamiji..."):
             try:
                 # Direct call without caching to avoid connection pool issues
                 chain = get_rag_chain()
-                response = chain.invoke({"question": prompt})
+                response = chain.invoke({
+                    "question": prompt,
+                    "chat_history": st.session_state.messages[:-1]
+                })
                 st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             except Exception as e:
