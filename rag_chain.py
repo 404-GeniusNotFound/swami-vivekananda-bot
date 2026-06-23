@@ -84,7 +84,7 @@ class ConversationalRagChain:
         return self.rag_chain.invoke({"question": standalone_question}, config)
 
 
-def get_retriever():
+def get_retriever(llm=None):
     api_key = os.getenv("PINECONE_API_KEY")
     index_name = os.getenv("PINECONE_INDEX_NAME")
     
@@ -106,8 +106,23 @@ def get_retriever():
         pinecone_api_key=api_key
     )
     
-    # Create retriever with k=3 to optimize input token consumption
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+    # 1. Base retriever uses MMR to ensure diversity in retrieved passages
+    base_retriever = vectorstore.as_retriever(
+        search_type="mmr",
+        search_kwargs={"k": 2, "fetch_k": 8}
+    )
+    
+    # 2. If LLM is provided, wrap in MultiQueryRetriever for query expansion
+    if llm:
+        from langchain_classic.retrievers.multi_query import MultiQueryRetriever
+        print("DEBUG: Creating MultiQueryRetriever...")
+        retriever = MultiQueryRetriever.from_llm(
+            retriever=base_retriever,
+            llm=llm
+        )
+    else:
+        retriever = base_retriever
+        
     return retriever
 
 def format_docs(docs):
@@ -117,7 +132,6 @@ def format_docs(docs):
 
 def get_rag_chain():
     print("DEBUG: Initializing RAG Chain...")
-    retriever = get_retriever()
     
     # Check for API Key
     api_key = os.getenv("GROQ_API_KEY")
@@ -131,6 +145,8 @@ def get_rag_chain():
         max_retries=2,
         max_tokens=300,  # Enforce output length limit
     )
+    
+    retriever = get_retriever(llm)
 
     # Simplified Persona Prompt with Scholarly Guide instructions
     template = '''You are a respectful, compassionate, and scholarly AI expert on the teachings, life, and philosophy of Swami Vivekananda. Your goal is to guide the user and explain his spiritual concepts clearly.
