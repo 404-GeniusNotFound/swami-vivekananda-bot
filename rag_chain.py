@@ -74,7 +74,9 @@ class ConversationalRagChain:
         # 2. Rephrase follow-up questions if history exists
         standalone_question = question
         if chat_history_raw:
-            formatted_history = format_chat_history(chat_history_raw)
+            # Only keep the last 6 messages (3 turns) to keep token usage bounded
+            chat_history_limited = chat_history_raw[-6:]
+            formatted_history = format_chat_history(chat_history_limited)
             standalone_question = rephrase_question(question, formatted_history, self.llm)
             print(f"DEBUG: Rephrased standalone question: '{standalone_question}' (Original: '{question}')")
             

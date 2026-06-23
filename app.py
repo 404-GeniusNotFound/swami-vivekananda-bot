@@ -166,7 +166,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # User input
-if prompt := st.chat_input("Ask a question to Swamiji..."):
+if prompt := st.chat_input("Ask a question to Swamiji...", max_chars=500):
     # Convert input to string just in case
     prompt = str(prompt)
     
