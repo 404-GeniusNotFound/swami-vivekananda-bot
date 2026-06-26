@@ -1,8 +1,8 @@
 streamlit
 langchain
 langchain-community
-langchain-pinecone
-pinecone
+langchain-pinecone>=0.2.13
+pinecone>=5.0.1
 langchain-groq
 pypdf
 python-dotenv
