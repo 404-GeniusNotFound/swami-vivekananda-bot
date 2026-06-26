@@ -2,7 +2,7 @@ streamlit
 langchain
 langchain-community
 langchain-pinecone
-pinecone-client
+pinecone
 langchain-groq
 pypdf
 python-dotenv
